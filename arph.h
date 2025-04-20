@@ -1,6 +1,7 @@
 #include "mac.h"
 #include "ip.h"
 
+#pragma pack(push,1)
 struct arpH{
     uint16_t h_type;
     uint16_t p_type;
@@ -13,3 +14,4 @@ struct arpH{
     Ip tip;
 
 };
+#pragma pack(pop)

@@ -8,4 +8,13 @@ struct Ip {
 
     Ip(){}
     Ip(std::string ip);
+
+    operator uint32_t() {
+        return ip;
+    }
+
+    Ip& operator=(uint32_t v) {
+        ip = v;
+        return *this;
+    }
 };
