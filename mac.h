@@ -14,7 +14,7 @@ struct Mac {
     uint8_t mac[6];
 
 
-    Mac(){memset(mac, 0, sizeof(mac));}
+    Mac(){}
     Mac(std::string a);
 
 
