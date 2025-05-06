@@ -17,17 +17,25 @@ int main(int argc, char *argv[]){
 
     pcap_t* pcap = pcap_open_live(argv[1],BUFSIZ,1,1000,err);
 
+    //my mac
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
     struct ifreq ifr;
     strcpy(ifr.ifr_name, argv[1]);
     ioctl(fd, SIOCGIFHWADDR, &ifr);
     uint8_t mac[6];
     memcpy(mac, ifr.ifr_hwaddr.sa_data, 6);
-    close(fd);
 
     char myMac[18];
     sprintf(myMac, "%02x:%02x:%02x:%02x:%02x:%02x",
             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+    //my ip
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    struct sockaddr_in* addr = (struct sockaddr_in*)&ifr.ifr_addr;
+    char *myIp = inet_ntoa(addr->sin_addr);
+
+    close(fd);
+
 
 
 
@@ -42,8 +50,8 @@ int main(int argc, char *argv[]){
     packet.arp.op_code = htons(0x0001);
     packet.arp.smac = Mac(myMac);
     packet.arp.tmac = Mac("00:00:00:00:00:00");
-    packet.arp.sip = htonl(Ip("192.168.219.1"));
-    packet.arp.tip = htonl(Ip(argv[3]));
+    packet.arp.sip = htonl(Ip(myIp));
+    packet.arp.tip = htonl(Ip(argv[2]));
 
     pcap_sendpacket(pcap, reinterpret_cast<u_char*>(&packet), sizeof(etharpPacket));
 
@@ -65,9 +73,9 @@ int main(int argc, char *argv[]){
     packet.arp.op_code = htons(0x0002); //reply
     packet.arp.smac = Mac(myMac);
 
-    packet.arp.sip = htonl(Ip("192.168.219.1"));
+    packet.arp.sip = htonl(Ip(argv[3]));
     packet.arp.tmac = recv_packet->arp.smac;
-    packet.arp.tip = htonl(Ip(argv[3]));
+    packet.arp.tip = htonl(Ip(myIp));
 
 
 
