@@ -82,37 +82,47 @@ int main(int argc, char *argv[]){
     while(true){
         pcap_next_ex(pcap,&header,&packet_data_2);
         etharpPacket* recv_packet_2 = (etharpPacket*)packet_data_2;
+
+
+
         //arp check
-        if (recv_packet_2->eth.etype != htons(0x0806)) continue;
-        //broadcast check
-        /*if (memcmp(recv_packet_2->eth.dmac.mac,Mac("ff:ff:ff:ff:ff:ff").mac,6)){
+        if (recv_packet_2->eth.etype == htons(0x0806)) {
+            //broadcast check
+            /*if (memcmp(recv_packet_2->eth.dmac.mac,Mac("ff:ff:ff:ff:ff:ff").mac,6)){
             if (recv_packet_2->arp.tip != Ip(argv[3])){
                 continue;
             }
         }*/
-        //ask gateway
-        if (recv_packet_2->arp.op_code == htons(0x0001)){
-            if (recv_packet_2->arp.sip != htonl(Ip(argv[2]))){
-                if (recv_packet_2->arp.tip != htonl(Ip(argv[3])))
-                    continue;
+            //ask gateway
+            if (recv_packet_2->arp.op_code == htons(0x0001)){
+                if (recv_packet_2->arp.sip == htonl(Ip(argv[2]))){
+                    if (recv_packet_2->arp.tip == htonl(Ip(argv[3])))
+                    usleep(500000);
+                    packet.eth.smac = Mac(myMac);
+                    packet.eth.dmac = recv_packet_1->arp.smac;
+                    packet.eth.etype = htons(0x0806);//arp
+
+                    packet.arp.h_type = htons(0x0001);//ethernet
+                    packet.arp.p_type = htons(0x0800);//ipv4
+                    packet.arp.h_length = 0x06; //mac
+                    packet.arp.p_length = 0x04; //ipv4
+                    packet.arp.op_code = htons(0x0002); //reply
+                    packet.arp.smac = Mac(myMac);
+
+                    packet.arp.sip = htonl(Ip(argv[3]));
+                    packet.arp.tmac = recv_packet_1->arp.smac;
+                    packet.arp.tip = htonl(Ip(myIp));
+                }
             }
+
+        }
+        else {
+            continue;
         }
 
-        usleep(500000);
-        packet.eth.smac = Mac(myMac);
-        packet.eth.dmac = recv_packet_1->arp.smac;
-        packet.eth.etype = htons(0x0806);//arp
-
-        packet.arp.h_type = htons(0x0001);//ethernet
-        packet.arp.p_type = htons(0x0800);//ipv4
-        packet.arp.h_length = 0x06; //mac
-        packet.arp.p_length = 0x04; //ipv4
-        packet.arp.op_code = htons(0x0002); //reply
-        packet.arp.smac = Mac(myMac);
-
-        packet.arp.sip = htonl(Ip(argv[3]));
-        packet.arp.tmac = recv_packet_1->arp.smac;
-        packet.arp.tip = htonl(Ip(myIp));
+        /*else if (recv_packet_2->eth.etype == htons(0x0800)){
+            packet_relay();
+        }*/
 
         pcap_sendpacket(pcap,reinterpret_cast<u_char*>(&packet),sizeof(etharpPacket));
 
